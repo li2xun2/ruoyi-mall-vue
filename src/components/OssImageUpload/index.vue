@@ -44,6 +44,7 @@
 
 <script>
 import { getToken } from "@/utils/auth";
+import request from "@/utils/request";
 
 export default {
   props: {
@@ -69,6 +70,11 @@ export default {
       default: true
     }
   },
+  created() {
+    console.log('OssImageUpload组件初始化');
+    console.log('baseUrl:', this.baseUrl);
+    console.log('uploadImgUrl:', this.uploadImgUrl);
+  },
   data() {
     return {
       number: 0,
@@ -87,17 +93,30 @@ export default {
   watch: {
     value: {
       handler(val) {
+        console.log('value变化:', val);
         if (val) {
           // 首先将值转为数组
           const list = Array.isArray(val) ? val : this.value.split(',');
+          console.log('转换为数组:', list);
           // 然后将数组转为对象数组
           this.fileList = list.map(item => {
+            console.log('处理每个item:', item);
             if (typeof item === "string") {
-              item = { name: item, url: item };
+              // 确保 URL 包含完整的 baseUrl
+              let url = item;
+              console.log('原始URL:', url);
+              if (url && !url.startsWith('http')) {
+                url = this.baseUrl + url;
+                console.log('添加baseUrl后的URL:', url);
+              }
+              item = { name: item, url: url };
+              console.log('转换后的item:', item);
             }
             return item;
           });
+          console.log('最终fileList:', this.fileList);
         } else {
+          console.log('value为空，重置fileList');
           this.fileList = [];
           return [];
         }
@@ -117,13 +136,32 @@ export default {
     handleRemove(file, fileList) {
       const findex = this.fileList.map(f => f.name).indexOf(file.name);
       if(findex > -1) {
+        // 调用后端删除接口
+        const fileUrl = file.url;
+        if (fileUrl) {
+          request({
+            url: this.baseUrl + "/oss/deleteFile",
+            method: 'post',
+            data: fileUrl
+          }).then(() => {
+            console.log("删除文件成功");
+          }).catch(() => {
+            console.log("删除文件失败");
+          });
+        }
+        // 从前端列表中删除
         this.fileList.splice(findex, 1);
         this.$emit("input", this.listToString(this.fileList));
       }
     },
     // 上传成功回调
     handleUploadSuccess(res) {
-      this.uploadList.push({ name: res.fileName, url: res.url });
+      // 确保 URL 包含完整的 baseUrl
+      let url = res.url;
+      if (url && !url.startsWith('http')) {
+        url = this.baseUrl + url;
+      }
+      this.uploadList.push({ name: res.fileName, url: url });
       if (this.uploadList.length === this.number) {
         this.fileList = this.fileList.concat(this.uploadList);
         this.uploadList = [];
@@ -174,15 +212,23 @@ export default {
     },
     // 预览
     handlePictureCardPreview(file) {
+      console.log('预览图片URL:', file.url);
       this.dialogImageUrl = file.url;
+      console.log('设置的对话框图片URL:', this.dialogImageUrl);
       this.dialogVisible = true;
+      console.log('对话框是否可见:', this.dialogVisible);
     },
     // 对象转成指定字符串分隔
     listToString(list, separator) {
       let strs = "";
       separator = separator || ",";
       for (let i in list) {
-        strs += list[i].url.replace(this.baseUrl, "") + separator;
+        // 确保 URL 包含完整的 baseUrl
+        let url = list[i].url;
+        if (url && !url.startsWith('http')) {
+          url = this.baseUrl + url;
+        }
+        strs += url + separator;
       }
       return strs != '' ? strs.substr(0, strs.length - 1) : '';
     }

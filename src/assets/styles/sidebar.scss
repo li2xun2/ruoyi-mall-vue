@@ -12,20 +12,21 @@
   }
 
   .sidebar-container {
-    -webkit-transition: width .28s;
-    transition: width 0.28s;
+    -webkit-transition: width .28s, box-shadow .28s;
+    transition: width 0.28s, box-shadow .28s;
     width: $base-sidebar-width !important;
-    background-color: $base-menu-background;
+    background: linear-gradient(135deg, #1a1f2e 0%, #242c3d 100%);
     height: 100%;
     position: fixed;
-    font-size: 0px;
+    font-size: 14px;
     top: 0;
     bottom: 0;
     left: 0;
     z-index: 1001;
     overflow: hidden;
-    -webkit-box-shadow: 2px 0 6px rgba(0,21,41,.35);
-    box-shadow: 2px 0 6px rgba(0,21,41,.35);
+    -webkit-box-shadow: 2px 0 12px rgba(0,21,41,.4);
+    box-shadow: 2px 0 12px rgba(0,21,41,.4);
+    border-right: 1px solid rgba(255,255,255,0.05);
 
     // reset element-ui css
     .horizontal-collapse-transition {
@@ -80,12 +81,17 @@
     .submenu-title-noDropdown,
     .el-submenu__title {
       &:hover {
-        background-color: rgba(0, 0, 0, 0.06) !important;
+        background-color: rgba(255, 255, 255, 0.08) !important;
+        border-left: 3px solid #409eff;
+        transition: all 0.3s ease;
       }
     }
 
     & .theme-dark .is-active > .el-submenu__title {
       color: $base-menu-color-active !important;
+      background-color: rgba(64, 158, 255, 0.15) !important;
+      border-left: 3px solid #409eff;
+      font-weight: 600;
     }
 
     & .nest-menu .el-submenu>.el-submenu__title,
@@ -93,7 +99,8 @@
       min-width: $base-sidebar-width !important;
 
       &:hover {
-        background-color: rgba(0, 0, 0, 0.06) !important;
+        background-color: rgba(255, 255, 255, 0.08) !important;
+        transition: all 0.3s ease;
       }
     }
 
@@ -102,8 +109,17 @@
       background-color: $base-sub-menu-background !important;
 
       &:hover {
-        background-color: $base-sub-menu-hover !important;
+        background-color: rgba(255, 255, 255, 0.08) !important;
+        transition: all 0.3s ease;
       }
+    }
+
+    // active menu item
+    .el-menu-item.is-active {
+      background-color: rgba(64, 158, 255, 0.15) !important;
+      border-left: 3px solid #409eff;
+      font-weight: 600;
+      transition: all 0.3s ease;
     }
   }
 

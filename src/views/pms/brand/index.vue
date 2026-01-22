@@ -101,6 +101,7 @@
 
 <script>
 import {addPmsBrand, delPmsBrand, exportPmsBrand, getPmsBrand, listPmsBrand, updatePmsBrand} from "@/api/pms/brand";
+import request from "@/utils/request";
 
 export default {
   name: "PmsBrand",
@@ -137,6 +138,8 @@ export default {
       },
       // 表单参数
       form: {},
+      // 初始logo值（用于取消时比较）
+      initialLogo: null,
       // 表单校验
       rules: {
       },
@@ -161,6 +164,20 @@ export default {
     },
     // 取消按钮
     cancel() {
+      // 检查是否有新上传的图片需要删除
+      if (this.form.logo && this.form.logo !== this.initialLogo) {
+        // 调用后端删除接口删除未保存的图片
+        const baseUrl = process.env.VUE_APP_BASE_API;
+        request({
+          url: baseUrl + "/oss/deleteFile",
+          method: 'post',
+          data: this.form.logo
+        }).then(() => {
+          console.log("删除未保存的图片成功");
+        }).catch(() => {
+          console.log("删除未保存的图片失败");
+        });
+      }
       this.open = false;
       this.reset();
     },
@@ -198,6 +215,7 @@ export default {
     /** 新增按钮操作 */
     handleAdd() {
       this.reset();
+      this.initialLogo = null;
       this.open = true;
       this.title = "添加品牌管理";
     },
@@ -207,6 +225,7 @@ export default {
       const id = row.id || this.ids
       getPmsBrand(id).then(response => {
         this.form = response;
+        this.initialLogo = response.logo;
         this.open = true;
         this.title = "修改品牌管理";
       });
