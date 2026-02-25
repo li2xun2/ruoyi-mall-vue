@@ -40,6 +40,14 @@ module.exports = {
         pathRewrite: {
           ['^' + process.env.VUE_APP_BASE_API]: ''
         }
+      },
+      // 代理FastAPI服务器
+      '/pyapi': {
+        target: `http://localhost:8000`,
+        changeOrigin: true,
+        pathRewrite: {
+          '^/pyapi': ''
+        }
       }
     },
     disableHostCheck: true

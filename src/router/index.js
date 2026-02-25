@@ -204,6 +204,36 @@ export const dynamicRoutes = [
       }
     ]
   },
+  {
+    path: '/ai',
+    component: Layout,
+    redirect: '/ai/index',
+    name: 'AI',
+    meta: {
+      title: 'AI管理',
+      icon: 'peoples'
+    },
+    children: [
+      {
+        path: 'index',
+        component: () => import('@/views/ai/index'),
+        name: 'AiIndex',
+        meta: {
+          title: '索引管理',
+          icon: 'table'
+        }
+      },
+      {
+        path: 'chat',
+        component: () => import('@/views/ai/chat'),
+        name: 'AiChat',
+        meta: {
+          title: 'AI客服',
+          icon: 'message'
+        }
+      }
+    ]
+  },
 ]
 
 // 防止连续点击多次路由报错
