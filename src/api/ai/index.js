@@ -36,6 +36,45 @@ const aiApi = {
     method: 'post',
     data: config,
     baseURL: '' // 直接使用绝对路径，绕过baseURL
+  }),
+  
+  // 获取FAQ列表
+  getFaqs: (params) => request({
+    url: '/api/ai/faqs/list',
+    method: 'post',
+    data: {
+      keyword: params.keyword
+    },
+    params: {
+      page: params.page,
+      size: params.size
+    }
+  }),
+  
+  // 获取单个FAQ
+  getFaq: (id) => request({
+    url: `/api/ai/faqs/${id}`,
+    method: 'get'
+  }),
+  
+  // 创建FAQ
+  createFaq: (faq) => request({
+    url: '/api/ai/faqs',
+    method: 'post',
+    data: faq
+  }),
+  
+  // 更新FAQ
+  updateFaq: (id, faq) => request({
+    url: `/api/ai/faqs/${id}`,
+    method: 'put',
+    data: faq
+  }),
+  
+  // 删除FAQ
+  deleteFaq: (id) => request({
+    url: `/api/ai/faqs/${id}`,
+    method: 'delete'
   })
 }
 

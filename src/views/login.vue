@@ -1,7 +1,8 @@
 <template>
   <div class="login">
+    <div ref="vantaContainer" class="vanta-container"></div>
     <el-form ref="loginForm" :model="loginForm" :rules="loginRules" class="login-form">
-      <h3 class="title">ruoyi-mall后台登录</h3>
+      <h3 class="title">商城管理系统登录</h3>
       <el-form-item prop="username">
         <el-input
           v-model="loginForm.username"
@@ -43,45 +44,14 @@
           :loading="loading"
           size="medium"
           type="primary"
-          style="width:45%;"
+          style="width:100%;"
           @click.native.prevent="handleLogin"
         >
           <span v-if="!loading">登 录</span>
           <span v-else>登 录 中...</span>
         </el-button>
-        <el-button
-          :loading="loading"
-          size="medium"
-          type="primary"
-          style="width:45%;"
-          @click.native.prevent="handleTry"
-        >
-          <span>获取体验账号</span>
-        </el-button>
-        <div style="float: right;" v-if="register">
-          <router-link class="link-type" :to="'/register'">立即注册</router-link>
-        </div>
       </el-form-item>
     </el-form>
-    <el-dialog
-      title="公众号二维码"
-      :visible.sync="dialogVisible"
-      :show-close="false"
-      :center="true"
-      width="30%">
-      <div style="text-align: center">
-        <span class="font-title-large"><span class="color-main font-extra-large">关注公众号</span>回复<span class="color-main font-extra-large">mall</span>获取体验账号</span>
-        <br>
-        <img src="@/assets/logo/gzh.jpg" width="160" height="160" style="margin-top: 10px">
-      </div>
-      <span slot="footer" class="dialog-footer">
-    <el-button type="primary" @click="dialogConfirm">确定</el-button>
-      </span>
-    </el-dialog>
-    <!--  底部  -->
-    <div class="el-login-footer">
-      <span>Copyright © 2017-2023 ichengle.top 技术支持：关注“程序员诚哥”微信公众号，回复：支持</span>
-    </div>
   </div>
 </template>
 
@@ -94,7 +64,6 @@ export default {
   name: "Login",
   data() {
     return {
-      dialogVisible:false,
       codeUrl: "",
       loginForm: {
         username: "",
@@ -115,9 +84,8 @@ export default {
       loading: false,
       // 验证码开关
       captchaEnabled: true,
-      // 注册开关
-      register: false,
-      redirect: undefined
+      redirect: undefined,
+      vantaEffect: null
     };
   },
   watch: {
@@ -126,6 +94,14 @@ export default {
         this.redirect = route.query && route.query.redirect;
       },
       immediate: true
+    }
+  },
+  mounted() {
+    this.initVanta();
+  },
+  beforeDestroy() {
+    if (this.vantaEffect) {
+      this.vantaEffect.destroy();
     }
   },
   created() {
@@ -152,12 +128,26 @@ export default {
         rememberMe: rememberMe === undefined ? false : Boolean(rememberMe)
       };
     },
-    handleTry(){
-        this.dialogVisible =true
-      },
-    dialogConfirm(){
-        this.dialogVisible =false;
-      },
+    initVanta() {
+      if (this.$refs.vantaContainer && window.VANTA) {
+        this.vantaEffect = window.VANTA.CLOUDS({
+          el: this.$refs.vantaContainer,
+          mouseControls: true,
+          touchControls: true,
+          gyroControls: false,
+          minHeight: 200.00,
+          minWidth: 200.00,
+          backgroundColor: 0xffffff,
+          skyColor: 0x68b8d7,
+          cloudColor: 0xadc1de,
+          cloudShadowColor: 0x183550,
+          sunColor: 0xff9919,
+          sunGlareColor: 0xff6633,
+          sunlightColor: 0xff9933,
+          speed: 1
+        });
+      }
+    },
     handleLogin() {
       this.$refs.loginForm.validate(valid => {
         if (valid) {
@@ -188,31 +178,32 @@ export default {
 </script>
 
 <style rel="stylesheet/scss" lang="scss">
-.color-main {
-  color: #409EFF;
-}
-.font-extra-large {
-  font-size: 20px;
-}
 .login {
   display: flex;
   justify-content: center;
   align-items: center;
   height: 100%;
-  background-image: url("../assets/images/login-background.jpg");
-  background-size: cover;
+  position: relative;
+  overflow: hidden;
 }
-.title {
-  margin: 0px auto 30px auto;
-  text-align: center;
-  color: #707070;
+.vanta-container {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 0;
 }
-
 .login-form {
+  position: relative;
+  z-index: 1;
   border-radius: 6px;
-  background: #ffffff;
+  background: rgba(255, 255, 255, 0.9);
+  backdrop-filter: blur(10px);
   width: 400px;
   padding: 25px 25px 5px 25px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
   .el-input {
     height: 38px;
     input {
@@ -225,10 +216,13 @@ export default {
     margin-left: 2px;
   }
 }
-.login-tip {
-  font-size: 13px;
+.title {
+  margin: 0px auto 30px auto;
   text-align: center;
-  color: #bfbfbf;
+  color: #707070;
+  font-size: 24px;
+  font-weight: bold;
+  color: #1e88e5;
 }
 .login-code {
   width: 33%;
@@ -238,18 +232,6 @@ export default {
     cursor: pointer;
     vertical-align: middle;
   }
-}
-.el-login-footer {
-  height: 40px;
-  line-height: 40px;
-  position: fixed;
-  bottom: 0;
-  width: 100%;
-  text-align: center;
-  color: #fff;
-  font-family: Arial;
-  font-size: 12px;
-  letter-spacing: 1px;
 }
 .login-code-img {
   height: 38px;

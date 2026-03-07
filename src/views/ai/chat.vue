@@ -60,9 +60,49 @@ export default {
     }
   },
   mounted() {
-    this.addSystemMessage('您好！我是AI客服助手，可以回答您关于系统的问题。请问有什么可以帮助您的？')
+    // 从localStorage加载对话记录
+    this.loadMessages()
+  },
+  watch: {
+    // 监听messages变化，自动保存到localStorage
+    messages: {
+      handler(newMessages) {
+        this.saveMessages(newMessages)
+      },
+      deep: true
+    }
   },
   methods: {
+    // 获取用户特定的存储键
+    getUserStorageKey() {
+      const userId = this.$store.state.user.userId || 'anonymous'
+      return `aiChatMessages_${userId}`
+    },
+    // 加载对话记录
+    loadMessages() {
+      const storageKey = this.getUserStorageKey()
+      const savedMessages = localStorage.getItem(storageKey)
+      if (savedMessages) {
+        try {
+          this.messages = JSON.parse(savedMessages)
+        } catch (error) {
+          console.error('加载对话记录失败:', error)
+          this.addSystemMessage('您好！我是AI客服助手，可以回答您关于系统的问题。请问有什么可以帮助您的？')
+        }
+      } else {
+        this.addSystemMessage('您好！我是AI客服助手，可以回答您关于系统的问题。请问有什么可以帮助您的？')
+      }
+    },
+    // 保存对话记录
+    saveMessages(messages) {
+      try {
+        const storageKey = this.getUserStorageKey()
+        localStorage.setItem(storageKey, JSON.stringify(messages))
+      } catch (error) {
+        console.error('保存对话记录失败:', error)
+      }
+    },
+
     async sendMessage() {
       if (!this.inputMessage.trim() || this.loading) return
       
@@ -81,7 +121,8 @@ export default {
           data: {
             question: message
           },
-          baseURL: '' // 直接使用绝对路径，绕过baseURL
+          baseURL: '', // 直接使用绝对路径，绕过baseURL
+          timeout: 60000 // 超时时间设置为60秒
         })
         
         // 添加AI回答
@@ -114,6 +155,9 @@ export default {
     
     clearMessages() {
       this.messages = []
+      // 清空localStorage中的记录
+      const storageKey = this.getUserStorageKey()
+      localStorage.removeItem(storageKey)
       this.addSystemMessage('您好！我是AI客服助手，可以回答您关于系统的问题。请问有什么可以帮助您的？')
     },
     

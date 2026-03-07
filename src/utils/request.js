@@ -67,14 +67,22 @@ service.interceptors.request.use(config => {
 
 // 响应拦截器
 service.interceptors.response.use(res => {
-    // 未设置状态码则默认成功状态
-    const code = res.data.code || 200;
-    // 获取错误信息
-    const msg = errorCode[code] || res.data.msg || errorCode['default']
     // 二进制数据则直接返回
     if(res.request.responseType ===  'blob' || res.request.responseType ===  'arraybuffer'){
       return res.data
     }
+    
+    // 检查是否是Java后端返回的Page对象
+    if (res.data && (res.data.content || res.data.totalElements)) {
+      // 直接返回Page对象
+      return res.data
+    }
+    
+    // 未设置状态码则默认成功状态
+    const code = res.data.code || 200;
+    // 获取错误信息
+    const msg = errorCode[code] || res.data.msg || errorCode['default']
+    
     if (code === 401) {
       if (!isRelogin.show) {
         isRelogin.show = true;
@@ -82,16 +90,17 @@ service.interceptors.response.use(res => {
           confirmButtonText: '重新登录',
           cancelButtonText: '取消',
           type: 'warning'
-        }
-      ).then(() => {
-        isRelogin.show = false;
-        store.dispatch('LogOut').then(() => {
-          location.href = '/index';
         })
-      }).catch(() => {
-        isRelogin.show = false;
-      });
-    }
+        .then(() => {
+          isRelogin.show = false;
+          store.dispatch('LogOut').then(() => {
+            location.href = '/index';
+          })
+        })
+        .catch(() => {
+          isRelogin.show = false;
+        });
+      }
       return Promise.reject('无效的会话，或者会话已过期，请重新登录。')
     } else if (code === 500) {
       Message({

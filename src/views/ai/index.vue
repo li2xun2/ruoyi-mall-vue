@@ -75,14 +75,22 @@
               <h4>{{ tableName }} 字段配置</h4>
               <el-form :model="configForm" label-width="80px">
                 <el-form-item label="文本字段">
-                  <el-checkbox-group v-model="selectedFields[tableName]" @change="handleFieldChange">
+                  <el-checkbox-group v-model="selectedFields[tableName]" @change="(val) => handleFieldChange(val, tableName)">
                     <el-checkbox 
-                      v-for="column in getTableColumns(tableName)" 
+                      v-for="column in getTableColumns(tableName)"
                       :key="column" 
                       :label="column">
                       {{ column }}
                     </el-checkbox>
                   </el-checkbox-group>
+                </el-form-item>
+                <el-form-item label="关键词">
+                  <el-input
+                    v-model="selectedKeywords[tableName]"
+                    placeholder="请输入关键词，用逗号分隔"
+                    @input="handleKeywordChange"
+                  ></el-input>
+                  <div class="form-tip">示例：用户,会员,个人信息</div>
                 </el-form-item>
               </el-form>
             </div>
@@ -91,6 +99,11 @@
               保存配置并初始化
             </el-button>
           </div>
+        </el-tab-pane>
+        
+        <!-- FAQ管理标签页 -->
+        <el-tab-pane label="FAQ管理" name="faq">
+          <FaqComponent />
         </el-tab-pane>
         
         <!-- 操作日志标签页 -->
@@ -111,9 +124,13 @@
 
 <script>
 import aiApi from '@/api/ai'
+import FaqComponent from './components/FaqComponent.vue'
 
 export default {
   name: 'AiIndex',
+  components: {
+    FaqComponent
+  },
   data() {
     return {
       activeTab: 'status', // 默认选中系统状态标签页
@@ -130,16 +147,29 @@ export default {
       availableTables: [],
       selectedTables: [],
       selectedFields: {},
+      selectedKeywords: {},
       configForm: {}
     }
   },
   mounted() {
-    this.getStatus()
-    this.getAvailableTables()
-    this.getConfig()
-    this.addLog('页面加载完成，获取AI系统状态')
+    this.initData()
   },
   methods: {
+    async initData() {
+      this.loading = true
+      try {
+        this.addLog('开始加载AI系统数据...')
+        // 按顺序加载数据，避免并发请求导致的卡顿
+        await this.getAvailableTables()
+        await this.getConfig()
+        await this.getStatus()
+        this.addLog('页面加载完成，获取AI系统状态')
+      } catch (error) {
+        this.addLog('加载数据失败')
+      } finally {
+        this.loading = false
+      }
+    },
     async getStatus() {
       this.loading = true
       try {
@@ -183,10 +213,13 @@ export default {
         if (res.tables) {
           this.availableTables = res.tables
           this.addLog('获取可用表信息成功')
+          // 打印表信息以便调试
+          console.log('Available tables:', this.availableTables)
         }
       } catch (error) {
         this.$message.error('获取可用表失败')
         this.addLog('获取可用表信息失败')
+        console.error('Error getting tables:', error)
       }
     },
     
@@ -196,11 +229,32 @@ export default {
         if (res.vector_tables) {
           this.selectedTables = res.vector_tables
           this.selectedFields = {}
+          this.selectedKeywords = {}
+          
+          // 确保每个表都有字段数组和关键词
+          for (const tableName of this.selectedTables) {
+            // 自动全选该表的所有字段
+            const allColumns = this.getTableColumns(tableName)
+            this.$set(this.selectedFields, tableName, allColumns)
+            this.$set(this.selectedKeywords, tableName, '')
+          }
+          
           if (res.vector_table_config) {
             for (const [table, fields] of Object.entries(res.vector_table_config)) {
-              this.selectedFields[table] = fields
+              if (this.selectedTables.includes(table)) {
+                this.$set(this.selectedFields, table, fields)
+              }
             }
           }
+          
+          if (res.vector_table_keywords) {
+            for (const [table, keywords] of Object.entries(res.vector_table_keywords)) {
+              if (this.selectedTables.includes(table)) {
+                this.$set(this.selectedKeywords, table, keywords.join(', '))
+              }
+            }
+          }
+          
           this.addLog('获取AI配置成功')
         }
       } catch (error) {
@@ -217,13 +271,24 @@ export default {
         // 构建配置对象
         const config = {
           vector_tables: this.selectedTables,
-          vector_table_config: {}
+          vector_table_config: {},
+          vector_table_keywords: {}
         }
         
         // 添加选中的字段
         for (const tableName of this.selectedTables) {
           if (this.selectedFields[tableName] && this.selectedFields[tableName].length > 0) {
             config.vector_table_config[tableName] = this.selectedFields[tableName]
+          }
+          
+          // 添加关键词
+          if (this.selectedKeywords[tableName]) {
+            // 将逗号分隔的关键词转换为数组
+            const keywords = this.selectedKeywords[tableName]
+              .split(',')
+              .map(keyword => keyword.trim())
+              .filter(keyword => keyword)
+            config.vector_table_keywords[tableName] = keywords
           }
         }
         
@@ -246,21 +311,44 @@ export default {
     },
     
     handleTableChange(val) {
-      // 确保每个选中的表都有字段数组
+      // 确保每个选中的表都有字段数组和关键词
       for (const tableName of val) {
         if (!this.selectedFields[tableName]) {
-          this.selectedFields[tableName] = []
+          // 自动全选该表的所有字段
+          const allColumns = this.getTableColumns(tableName)
+          this.$set(this.selectedFields, tableName, allColumns)
+        }
+        if (!this.selectedKeywords[tableName]) {
+          this.$set(this.selectedKeywords, tableName, '')
+        }
+      }
+      // 移除已取消选中的表
+      for (const tableName in this.selectedFields) {
+        if (!val.includes(tableName)) {
+          this.$delete(this.selectedFields, tableName)
+          this.$delete(this.selectedKeywords, tableName)
         }
       }
     },
     
     handleFieldChange(val, tableName) {
       // 字段变化处理
+      this.$set(this.selectedFields, tableName, val || [])
+    },
+    
+    handleKeywordChange() {
+      // 关键词变化处理
     },
     
     getTableColumns(tableName) {
       const table = this.availableTables.find(t => t.name === tableName)
-      return table ? table.text_columns : []
+      if (table && table.columns) {
+        // 确保columns是数组且每个元素都有column_name属性
+        return table.columns
+          .filter(col => col && col.column_name)
+          .map(col => col.column_name)
+      }
+      return []
     },
     
     updateTableStats() {
