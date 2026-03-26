@@ -105,7 +105,7 @@ export default {
               // 确保 URL 包含完整的 baseUrl
               let url = item;
               console.log('原始URL:', url);
-              if (url && !url.startsWith('http')) {
+              if (url && !url.startsWith('http') && !url.startsWith(this.baseUrl)) {
                 url = this.baseUrl + url;
                 console.log('添加baseUrl后的URL:', url);
               }
@@ -140,7 +140,7 @@ export default {
         const fileUrl = file.url;
         if (fileUrl) {
           request({
-            url: this.baseUrl + "/oss/deleteFile",
+            url: "/oss/deleteFile",
             method: 'post',
             data: fileUrl
           }).then(() => {
@@ -156,11 +156,8 @@ export default {
     },
     // 上传成功回调
     handleUploadSuccess(res) {
-      // 确保 URL 包含完整的 baseUrl
+      // 只保存相对路径，不包含baseUrl
       let url = res.url;
-      if (url && !url.startsWith('http')) {
-        url = this.baseUrl + url;
-      }
       this.uploadList.push({ name: res.fileName, url: url });
       if (this.uploadList.length === this.number) {
         this.fileList = this.fileList.concat(this.uploadList);
@@ -213,7 +210,12 @@ export default {
     // 预览
     handlePictureCardPreview(file) {
       console.log('预览图片URL:', file.url);
-      this.dialogImageUrl = file.url;
+      // 确保预览URL包含完整的baseUrl
+      let url = file.url;
+      if (url && !url.startsWith('http') && !url.startsWith(this.baseUrl)) {
+        url = this.baseUrl + url;
+      }
+      this.dialogImageUrl = url;
       console.log('设置的对话框图片URL:', this.dialogImageUrl);
       this.dialogVisible = true;
       console.log('对话框是否可见:', this.dialogVisible);
@@ -223,10 +225,11 @@ export default {
       let strs = "";
       separator = separator || ",";
       for (let i in list) {
-        // 确保 URL 包含完整的 baseUrl
+        // 只使用相对路径，不包含baseUrl
         let url = list[i].url;
-        if (url && !url.startsWith('http')) {
-          url = this.baseUrl + url;
+        // 移除baseUrl前缀，只保留相对路径
+        if (url && url.startsWith(this.baseUrl)) {
+          url = url.replace(this.baseUrl, '');
         }
         strs += url + separator;
       }

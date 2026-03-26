@@ -68,8 +68,8 @@
         <template slot-scope="{ row }">
           <el-image
             v-if="row.icon"
-            :src="row.icon"
-            :preview-src-list="[row.icon]"
+            :src="row.icon.startsWith('http') || row.icon.startsWith('/dev-api') ? row.icon : '/dev-api' + row.icon"
+            :preview-src-list="[row.icon.startsWith('http') || row.icon.startsWith('/dev-api') ? row.icon : '/dev-api' + row.icon]"
             class="small-img circle-img"
           />
         </template>

@@ -36,7 +36,7 @@
       <el-table-column type="selection" width="55" align="center"/>
       <el-table-column label="品牌logo" prop="logo">
         <template slot-scope="{ row }">
-          <el-image v-if="row.logo" :src="row.logo" :preview-src-list="[row.logo]" class="small-img circle-img"/>
+          <el-image v-if="row.logo" :src="row.logo.startsWith('http') ? row.logo : '/dev-api' + row.logo" :preview-src-list="[row.logo.startsWith('http') ? row.logo : '/dev-api' + row.logo]" class="small-img circle-img"/>
         </template>
       </el-table-column>
       <el-table-column label="名称" prop="name"/>
@@ -167,9 +167,8 @@ export default {
       // 检查是否有新上传的图片需要删除
       if (this.form.logo && this.form.logo !== this.initialLogo) {
         // 调用后端删除接口删除未保存的图片
-        const baseUrl = process.env.VUE_APP_BASE_API;
         request({
-          url: baseUrl + "/oss/deleteFile",
+          url: "/oss/deleteFile",
           method: 'post',
           data: this.form.logo
         }).then(() => {

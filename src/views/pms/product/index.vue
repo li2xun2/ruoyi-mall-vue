@@ -65,7 +65,7 @@
         <el-table-column type="selection" width="55" align="center"/>
         <el-table-column label="主图" prop="pic">
           <template slot-scope="{ row }">
-            <el-image v-if="row.pic" :src="row.pic" :preview-src-list="[row.pic]" class="small-img"/>
+            <el-image v-if="row.pic" :src="row.pic.startsWith('http') ? row.pic : '/dev-api' + row.pic" :preview-src-list="[row.pic.startsWith('http') ? row.pic : '/dev-api' + row.pic]" class="small-img"/>
           </template>
         </el-table-column>
         <el-table-column label="名称/编码" min-width="200" prop="outProductId">

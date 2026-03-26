@@ -56,19 +56,9 @@
       <el-table v-loading="loading" :data="umsMemberList" border>
         <el-table-column label="昵称" prop="nickname" width="150"/>
         <el-table-column label="手机号码" prop="phoneHidden" width="150"/>
-        <el-table-column label="佣金" width="120">
-          <template v-slot="scope">
-            <div>0.00</div>
-          </template>
-        </el-table-column>
         <el-table-column label="积分" width="120">
           <template v-slot="scope">
-            <div>0.00</div>
-          </template>
-        </el-table-column>
-        <el-table-column label="余额" width="120">
-          <template v-slot="scope">
-            <div>0.00</div>
+            <div>{{ scope.row.integral || 0 }}</div>
           </template>
         </el-table-column>
         <el-table-column label="注册时间" prop="createTime" width="180">
